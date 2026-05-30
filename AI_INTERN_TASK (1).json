@@ -1,0 +1,594 @@
+{
+  "name": "AI_INTERN_TASK",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -16,
+        112
+      ],
+      "id": "2ac94290-1bd2-495d-b391-801c92798030",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "Run actor and get dataset",
+        "actorSource": "store",
+        "actorId": {
+          "__rl": true,
+          "value": "nFJndFXA5zjCTuudP",
+          "mode": "list",
+          "cachedResultName": "Google Search Results Scraper (apify/google-search-scraper)",
+          "cachedResultUrl": "https://console.apify.com/actors/nFJndFXA5zjCTuudP/input"
+        },
+        "customBody": "{\n  \"queries\": \"Canada visitor visa OR student visa help reddit\\nCanada work permit OR PR timeline reddit\\nCanada spousal OR super visa quora\\nCanada student visa OR PR process youtube\",\n  \"maxPagesPerQuery\": 1\n}"
+      },
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "8c0e460d-e155-42ab-bf16-259b904db75a",
+      "name": "Run an Actor and get dataset",
+      "credentials": {
+        "apifyApi": {
+          "id": "r7fgLlt7gRaIO6lP",
+          "name": "Apify account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "organicResults",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        448,
+        32
+      ],
+      "id": "d471c929-fa51-4385-9024-5c8565a2496b",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert AI Lead Qualifier for a Canadian Immigration Consultancy, completing a vetting workflow based on \"AI Intern Task.pdf\".\n\nAnalyze the incoming search result object from Apify and extract information strictly matching the keys required by the output parser.\n\n---\nINCOMING DATA TO EVALUATE:\nWebsite Title: {{ $json.websiteTitle }}\nPost Title: {{ $json.title }}\nPost Description: {{ $json.description }}\nSource URL: {{ $json.url }}\n---\n\nEVALUATION & MAPPING RULES:\n1. platform: Identify the source platform from the Website Title or Source URL. Must be exactly \"Reddit\", \"Quora\", or \"YouTube\". If it is from anywhere else or cannot be determined, output \"Other\".\n2. genuine: Evaluate if this person is genuinely looking for immigration help, pathways, or timeline advice. Output \"Yes\", \"No\", or \"Maybe\". (Crucial: If the description is just a generic subreddit community landing page and not a real user post, output \"No\").\n3. category: Map the question to the correct visa type. Must be exactly one of these: \"Canada Visitor Visa\", \"Canada Student Visa\", \"Canada Work Permit\", \"Canada PR\", \"Canada Spousal Visa\", or \"Canada Super Visa\".\n4. intent: Based on their post, classify them as \"Hot\" (explicitly looking for professional help or immediate action), \"Warm\" (asking if a path is viable, exploring options), or \"Cold\" (casual conversation, news sharing, or a community landing page).\n5. urgency: Classify as \"High\" (has explicit deadlines, visa expiry, or visa refusals), \"Medium\" (planning a move in the near future), or \"Low\" (no timeline mentioned/casual interest).\n6. lead_score: Assign a numerical score from 0 to 100 based on their likelihood to convert into a paying client. \n   - 80-100 (Hot): Explicitly asking for a lawyer/consultant, visa expired, or recent refusal.\n   - 40-79 (Warm): Asking about eligibility, pathways, or general timelines.\n   - 0-39 (Cold): Just sharing news, general discussion, or a generic community landing page.\n7. summary: Write a concise 1-2 line summary of the user's specific problem or profile based on the description.\n8. outreach: Generate a highly personalized, empathetic 2-sentence outreach pitch addressing their specific scenario. Use the example style from \"AI Intern Task.pdf\": \"Hi there! Saw your post regarding whether a student visa is a viable path to Canadian PR for your profile. We've helped many people navigate the transition smoothly and would love to answer any questions you have.\"\n\n---\nSTRICT FORMATTING RULES:\nReturn ONLY a valid JSON object matching the requested schema. \nDo NOT wrap the JSON inside an \"output\" key. \nDo NOT include markdown formatting like ```json or any conversational text. \nStart your response directly with { and end it with }.",
+        "hasOutputParser": true,
+        "needsFallback": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1376,
+        0
+      ],
+      "id": "29573301-60c0-4cc2-bf05-bfd6e7dfe2d0",
+      "name": "Basic LLM Chain",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"Platform\": \"Reddit\",\n  \"genuine\": \"Yes\",\n  \"category\": \"Student Visa\",\n  \"intent\": \"Hot\",\n  \"urgency\": \"High\",\n  \"summary\": \"1-2 line summary here.\",\n  \"outreach\": \"Hi there! [2-sentence personalized pitch].\",\n  \"url\": \"https://www.reddit.com/r/ImmigrationCanada/comments/example_post/\",\n  \"lead_score\": 95\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1536,
+        224
+      ],
+      "id": "bbeb1a1c-6892-40fc-bb3a-08d3ce039b3d",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1G2LhX8a6Q43s7Yhsk29saRGs2uufPVhQ6_0evUdl_Qs",
+          "mode": "list",
+          "cachedResultName": "Reddit Immigration Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1G2LhX8a6Q43s7Yhsk29saRGs2uufPVhQ6_0evUdl_Qs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1G2LhX8a6Q43s7Yhsk29saRGs2uufPVhQ6_0evUdl_Qs/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Genuine": "={{ $json.output.genuine }}",
+            "Category": "={{ $json.output.category }}",
+            "Intent": "={{ $json.output.intent }}",
+            "Urgency": "={{ $json.output.urgency }}",
+            "Summary": "={{ $json.output.summary }}",
+            "Outreach": "={{ $json.output.outreach }}",
+            "Platform": "={{ $json.output.Platform }}",
+            "url": "={{ $json.output.url }}",
+            "lead_score": "={{ $json.output.lead_score }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Platform",
+              "displayName": "Platform",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "url",
+              "displayName": "url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Genuine",
+              "displayName": "Genuine",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Intent",
+              "displayName": "Intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_score",
+              "displayName": "lead_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Urgency",
+              "displayName": "Urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Outreach",
+              "displayName": "Outreach",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1712,
+        32
+      ],
+      "id": "a0489b25-b9a2-48dd-b207-e2932eb7a841",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pwe3KLKYrBK2wozh",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-5-nano",
+          "mode": "list",
+          "cachedResultName": "gpt-5-nano"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1424,
+        224
+      ],
+      "id": "c0f0ab22-a667-4fdc-aaab-00edd6e1cb14",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "FDECv0xJdRxG4Ryk",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        16
+      ],
+      "id": "d3af5965-dfb8-41af-a2ae-820c0ae130a0",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1G2LhX8a6Q43s7Yhsk29saRGs2uufPVhQ6_0evUdl_Qs",
+          "mode": "list",
+          "cachedResultName": "Reddit Immigration Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1G2LhX8a6Q43s7Yhsk29saRGs2uufPVhQ6_0evUdl_Qs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1G2LhX8a6Q43s7Yhsk29saRGs2uufPVhQ6_0evUdl_Qs/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        272
+      ],
+      "id": "2593d7f8-fc52-47c9-b98d-66bc26bc5280",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "pwe3KLKYrBK2wozh",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "url",
+              "field2": "url"
+            }
+          ]
+        },
+        "joinMode": "keepNonMatches",
+        "outputDataFrom": "input1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        768,
+        64
+      ],
+      "id": "b190407e-e9d1-4f93-adca-f64f9c6e9c40",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "015a4b10-fea2-4dba-b080-854a50edcf73",
+              "leftValue": "={{ $json.Intent }}",
+              "rightValue": "Hot",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "7149592f-1e8d-4b9b-a821-fcdda25f4585",
+              "leftValue": "={{ $json.lead_score }}",
+              "rightValue": 80,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1920,
+        176
+      ],
+      "id": "b618ecb9-ef3c-4ee4-844c-040f8017ee0e",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "brijrpatel007@gmail.com",
+        "subject": "=[HOT LEAD] {{ $json.Category }} | Score: {{ $json.lead_score }}/100",
+        "emailType": "text",
+        "message": "=Hello Team,\n\nOur AI Lead Qualifier has intercepted a high-priority immigration prospect that requires immediate attention.\n\n=========================================\n🚨 LEAD INSIGHTS\n=========================================\n📌 Platform:     {{ $json.Platform }}\n🎯 Category:     {{ $json.Category }}\n🔥 Intent:       {{ $json.Intent }}\n⚡ Urgency:      {{ $json.Urgency }}\n📊 Lead Score:   {{ $json.lead_score }}/100\n\n📋 CASE SUMMARY:\n{{ $json.Summary }}\n\n=========================================\n💬 READY-TO-USE OUTREACH PITCH\n=========================================\n{{ $json.Outreach }}\n\n=========================================\n🔗 ACTION REQUIRED\n=========================================\nClick the link below to open the thread and paste the outreach pitch:\n👉 {{ $json.url }}\n\n-----------------------------------------\nAutomated by your n8n Vetting Pipeline.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2144,
+        224
+      ],
+      "id": "92daf57f-4a1f-4340-8081-4b68415b1836",
+      "name": "Send a message",
+      "webhookId": "833c9a5c-0426-4828-a268-6fb992802875",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "BtSSghxixxncSZvn",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1248,
+        208
+      ],
+      "id": "da99a9ac-3421-4a17-8348-c5e733e68b0d",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "1En0qdYTW4oGKL7g",
+          "name": "Groq account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Run an Actor and get dataset",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run an Actor and get dataset": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e7bb8d2d-e3b9-456a-9cc6-82777d9388d9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "34e6fdd572b76777fd00300a911f3b8c4caba8bc48460a39ae71369a0e664957"
+  },
+  "id": "cW8ignoxfyNgSnoV",
+  "tags": [
+    {
+      "updatedAt": "2026-05-29T09:17:50.572Z",
+      "createdAt": "2026-05-29T09:17:50.572Z",
+      "id": "jxz7J20dyjtQTJ4V",
+      "name": "assignment"
+    }
+  ]
+}
